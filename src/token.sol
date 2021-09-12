@@ -15,11 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.4.23;
+pragma solidity >=0.7.6;
 
 import "ds-math/math.sol";
 import "ds-auth/auth.sol";
-
 
 contract DSToken is DSMath, DSAuth {
     bool                                              public  stopped;
@@ -47,11 +46,11 @@ contract DSToken is DSMath, DSAuth {
         _;
     }
 
-    function approve(address guy) external returns (bool) {
+    function approve(address guy) external virtual returns (bool) {
         return approve(guy, uint(-1));
     }
 
-    function approve(address guy, uint wad) public stoppable returns (bool) {
+    function approve(address guy, uint wad) public virtual stoppable returns (bool) {
         allowance[msg.sender][guy] = wad;
 
         emit Approval(msg.sender, guy, wad);
@@ -59,12 +58,13 @@ contract DSToken is DSMath, DSAuth {
         return true;
     }
 
-    function transfer(address dst, uint wad) external returns (bool) {
+    function transfer(address dst, uint wad) external virtual returns (bool) {
         return transferFrom(msg.sender, dst, wad);
     }
 
     function transferFrom(address src, address dst, uint wad)
         public
+        virtual
         stoppable
         returns (bool)
     {
@@ -94,7 +94,6 @@ contract DSToken is DSMath, DSAuth {
         transferFrom(src, dst, wad);
     }
 
-
     function mint(uint wad) external {
         mint(msg.sender, wad);
     }
@@ -103,13 +102,13 @@ contract DSToken is DSMath, DSAuth {
         burn(msg.sender, wad);
     }
 
-    function mint(address guy, uint wad) public auth stoppable {
+    function mint(address guy, uint wad) public virtual auth stoppable {
         balanceOf[guy] = add(balanceOf[guy], wad);
         totalSupply = add(totalSupply, wad);
         emit Mint(guy, wad);
     }
 
-    function burn(address guy, uint wad) public auth stoppable {
+    function burn(address guy, uint wad) public virtual auth stoppable {
         if (guy != msg.sender && allowance[guy][msg.sender] != uint(-1)) {
             require(allowance[guy][msg.sender] >= wad, "ds-token-insufficient-approval");
             allowance[guy][msg.sender] = sub(allowance[guy][msg.sender], wad);
@@ -130,7 +129,6 @@ contract DSToken is DSMath, DSAuth {
         stopped = false;
         emit Start();
     }
-
 
     function setName(string memory name_) public auth {
         name = name_;
